@@ -3,8 +3,11 @@ hostnamectl set-hostname isp.au-team.irpo; exec bash
 useradd имя_пользователя
 passwd имя_пользователя
 
-sshuser (P@ssw0rd) - HQ-SRV   BR-SRV
-net_admin (P@ssw0rd) - HQ-RTR  BR-RTR
+sshuser (P@ssw0rd) - HQ-SRV	BR-SRV
+net_admin (P@ssw0rd) - HQ-RTR 	BR-RTR 	ISP
+
+useradd sshuser		passwd P@ssw0rd
+useradd net_admin	passwd P@ssw0rd
 
 ======================================================
 isp
