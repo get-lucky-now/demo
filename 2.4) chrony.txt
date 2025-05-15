@@ -1,0 +1,50 @@
+======================================================
+chrony на сервере HQ-RTR
+======================================================
+
+apt-get install chrony
+systemctl status chronyd
+timadatectl
+
+******************************************************
+/etc/chrony.conf
+******************************************************
+local stratum 7
+allow 192.168.1.0/26
+allow 192.168.2.0/28
+allow 172.16.4.0/28
+allow 172.16.5.0/28
+allow 192.168.3.0/27
+
+#rtcsync
+
+******************************************************
+
+systemctl enable --now chronyd
+systemctl restart chronyd
+timedatectl set-ntp 0
+timadatectl
+
+======================================================
+chrony на клиентах
+======================================================
+
+systemctl disable --now chronyd
+systemctl status chronyd
+
+apt-get install systemd-timesyncd
+
+******************************************************
+/etc/systemd/timesyncd.conf 
+******************************************************
+
+(cli) NTP=192.168.2.1
+(br-rtr) NTP=172.16.4.2
+(hq-srv) NTP=192.168.1.1
+(br-srv) NTP=172.16.4.2
+
+******************************************************
+
+systemctl enable --now systemd-timesyncd
+systemctl restart systemd-timesyncd
+timedatectl timesync-status

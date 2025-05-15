@@ -1,0 +1,175 @@
+======================================================
+/etc/resolv.conf
+======================================================
+nameserver 8.8.8.8
+
+******************************************************
+
+apt-get install samba
+apt-get install task-samba-dcrm
+
+======================================================
+/etc/resolv.conf
+======================================================
+nameserver 127.0.0.1
+
+******************************************************
+
+rm -rf /etc/samba/smb.conf
+hostname -f
+
+======================================================
+/etc/hosts
+======================================================
+192.168.3.10	br-srv.au-team.irpo
+
+******************************************************
+
+======================================================
+HQ-SRV /etc/dnsmasq.conf
+======================================================
+server=/au-team.irpo/192.168.3.10
+
+******************************************************
+
+Возвращаемся на BR-SRV
+
+samba-tool domain provision
+
+AU-TEAM.IRPO
+AU-TEAM
+dc
+SAMBA_INTERNAL
+192.168.1.10 (Здесь вводим значение вручную)
+P@ssw0rd
+
+mv -f /var/lib/samba/private/krb5.conf /etc/krb5.conf
+systemctl enable samba
+
+======================================================
+/etc/rc.d/rc.local
+======================================================
+#!/bin/sh -e
+systemctl restart network
+systemctl restart samba
+exit 0
+
+******************************************************
+
+chmod +x /etc/rc.d/rc.local
+
+reboot
+
+samba-tool domain info 127.0.0.1
+
+samba-tool user add user1.hq P@ssw0rd
+samba-tool user add user2.hq P@ssw0rd
+samba-tool user add user3.hq P@ssw0rd
+samba-tool user add user4.hq P@ssw0rd
+samba-tool user add user5.hq P@ssw0rd
+
+samba-tool group add hq
+samba-tool group addmembers hq user1.hq,user2.hq,user3.hq,user4.hq,user5.hq
+
+******************************************************
+
+На CLI
+Центр управления системой > Аутентификация > Домен Active Directory
+
+Домен: AU-TEAM.IRPO
+Рабочая группа: AU-TEAM
+Имя компьютера: hq-cli
+
+Восстановить файлы конфигурации по умолчанию
+P@ssw0rd
+reboot
+
+(если не работает, то systemctl stop systemd-resolved и systemctl disable systemd-resolved
+
+******************************************************
+
+Возвращаемся на BR-SRV
+
+apt-repo add rpm http://altrepo.ru/local-p10 noarch local-p10
+apt-get update
+apt-get install sudo-samba-schema
+
+sudo-schema-apply
+yes
+вводим P@ssw0rd
+
+create-sudo-rule
+Имя правила	: prava_hq
+sudoCommand	: /bin/cat
+sudoUser	: %hq
+
+******************************************************
+
+######################################################
+На CLI
+######################################################
+apt-get update
+apt-get install admc
+kinit administrator
+P@ssw0rd
+
+admc
+Включаем Настройки > Дополнительные возможности
+au-team.irpo > sudoers > prava_hq > Атрибуты > sudoOption > добавляем !authenticate , в sudoCommand добавляем /bin/grep и /usr/bin/id
+
+apt-get update
+apt-get install sudo libsss_sudo
+control sudo public
+
+======================================================
+/etc/sssd/sssd.conf
+======================================================
+services = nss, pam, sudo
+sudo_provider = ad (после id_provider и перед auth_provider)
+
+******************************************************
+
+======================================================
+/etc/nsswitch.conf
+======================================================
+sudoers: files sss (после gshadow)
+
+******************************************************
+
+reboot
+
+rm -rf /var/lib/ssd/db/*
+sss_cache -E
+systemctl restart sssd
+sudo -l -U user1.hq
+
+******************************************************
+
+Под пользователем user1.hq
+sudo cat /etc/passwd | sudo grep root
+sudo id root
+
+******************************************************
+
+Возвращаемся на BR-SRV
+
+curl -L https://bit.ly/3C1nEYz > /root/users.zip
+unzip /root/users.zip
+mv /root/Users.csv /opt/Users.csv
+
+======================================================
+mcedit import 
+======================================================
+#!/bin/bash
+csv_file=”/opt/Users.csv”
+while IFS=”;” read -r firstName lastName role phone ou street zip city country password; do
+	if [ “$firstName” == “First Name” ]; then
+		continue
+	fi
+	username=”${firstName,,}.${lastName,,}”
+	sudo samba-tool user add “$username” P@ssw0rd
+done < “$csv_file”
+
+******************************************************
+chmod +x /root/import
+bash /root/import

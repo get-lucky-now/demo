@@ -1,0 +1,62 @@
+lsblk
+mdadm --create /dev/md0 --level=5 --raid-devices=3 /dev/sd[b-d]
+cat /proc/mdstat
+mdadm --detail -scan > /etc/mdadm.conf
+fdisk /dev/md0
+n
+Нажимаем ENTER до Created a new partition ...
+w
+mkfs.ext4 /dev/md0p1
+
+======================================================
+nano /etc/fstab
+======================================================
+
+/dev/md0p1	/raid5		ext4	defaults	0	0
+
+******************************************************
+
+НИЖЕ НЕ НУЖНО
+
+mkdir /raid5
+mount -a
+
+apt-get install nfs-server
+mkdir /raid5/nfs
+chown 99:99 /raid5/nfs
+chmod 777 /raid5/nfs
+
+======================================================
+nano /etc/exports
+======================================================
+
+/raid5/nfs 192.168.2.0/28(rw,sync,no_subtree_check)
+
+******************************************************
+exportfs -a
+exportfs -v
+systemctl restart nfs
+
+******************************************************
+
+На CLI
+
+apt-get update
+apt-get install nfs-clients
+mkdir -p /mnt/nfs
+
+======================================================
+nano /etc/fstab
+======================================================
+
+192.168.1.10:/raid5/nfs	/mnt/nfs	nfs	defaults	0	0
+
+******************************************************
+
+mount -a
+mount -v
+touch /mnt/nfs/ruby
+
+HQ-SRV
+cd /raid5/nfs
+ls

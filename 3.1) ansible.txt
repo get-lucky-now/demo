@@ -1,0 +1,32 @@
+apt-get install ansible
+mkdir -p /etc/ansible
+
+======================================================
+nano /etc/ansible/hosts
+======================================================
+hq-srv ansible_host=sshuser@192.168.1.10 ansible_port=2024
+hq-cli ansible_host=sshuser@192.168.2.* ansible_port=2024
+hq-rtr ansible_host=net_admin@192.168.1.1 ansible_port=2024
+br-rtr ansible_host=net_admin@192.168.3.1 ansible_port=2024
+
+======================================================
+nano /etc/ansible/ansible.cfg
+======================================================
+[defaults] 
+ansible_python_interpreter=/usr/bin/python3
+
+======================================================
+на BR-SRV генерируем ключи RSA
+======================================================
+
+ssh-keygen -t rsa (ENTER до конца)
+ssh-copy-id -p 2024 net_admin@192.168.3.1
+ssh-copy-id -p 2024 sshuser@192.168.2.7
+ssh-copy-id -p 2024 sshuser@192.168.1.10
+ssh-copy-id -p 2024 net_admin@192.168.1.1
+
+======================================================
+
+ansible all -m ping
+
+НА HQ-CLI apt-get install python-module-json

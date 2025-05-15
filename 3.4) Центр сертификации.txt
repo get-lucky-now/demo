@@ -1,0 +1,92 @@
+apt-get install tree
+
+mkdir /ca; cd /ca
+
+=====================================================
+nano /var/lib/ssl/openssl.cnf
+=====================================================
+[ CA_default ]
+dir = /ca
+policy = policy_anything
+
+[ policy_anything ]
+commonName = supplied
+
+[ req_distinguished_name ]
+countryName_default = RU
+0.organizationName_default = DEMO.FIRST
+
+[ CA_default ]
+certs = $dir/certs
+crl_dir = $dir/crl
+database = $dir/index.txt
+
+new_certs_dir = $dir/newcerts
+
+serial = $dir/serial
+
+private_key = $dir/private/cakey.pem
+
+******************************************************
+
+mkdir certs newcerts crl private
+touch index.txt
+echo -n '00' > serial
+
+******************************************************
+
+openssl req -nodes -new -out cacert.csr -keyout private/cakey.pem -extensions v3_ca
+
+значения C=RU и O=DEMO.FIRST — автоматически подставляются из конфигурационного файла, также не забываем указать CN (т. к. он у всех разный), в случае когда поля необходимо оставить пустыми — ставить «.» (точку)
+
+Country Name (2 letter code) [RU]:
+State or Province Name (full name) [] :.
+Locality Name (eg, city) [] :.
+Organization Name (eg, company) [DEMO.FIRST]:
+Urganizational Unit Name (eg, section) []:.
+Common Name (e.g., your name or your server's hostname) []:DEMO.FIRST RootCA
+Email Address []:
+
+******************************************************
+
+openssl ca -selfsign -in cacert.csr -out cacert.pem -extensions v3_ca
+
+Subject :
+countryName = RU
+organizationName = DEMO.FIRST
+commonName = DEMO.FIRST RootCA
+
+Sign the certificate? [y/n]:y
+1 out of 1 certificate requests certified, commit? [y/n]:y
+
+******************************************************
+pwd (будет /ca)
+tree (будет структура Корневого ЦС)
+******************************************************
+
+openssl x509 -noout -text -in cacert.pem | less
+
+Issuer: C = RU, O = DEMO.FIRST, CN = DEMO.FIRST RootCA
+(Q выйти)
+******************************************************
+
+Передача Корневого cертификата на устройства:
+
+scp -P 2024 /ca/cacert.pem root@172.16.5.1:~/
+scp -P 2024 /ca/cacert.pem root@192.168.1.1:~/
+scp -P 2024 /ca/cacert.pem root@192.168.2.7:~/
+scp -P 2024 /ca/cacert.pem root@192.168.3.1:~/
+scp -P 2024 /ca/cacert.pem root@192.168.3.10:~/
+
+******************************************************
+
+На HQ-CLI
+
+mv /home/user/cacert.pem /etc/pki/ca-trust/source/anchors/cacert.crt
+
+( mv /root/cacert.pem /etc/pki/ca-trust/source/anchors/cacert.crt )
+
+update-ca-trust extract
+
+Аналогично, необходимо передать файл cacert.pem, но с "расширением" .crt, например cacert.crt в дирректорию /etc/pki/ca-trust/source/anchors, а затем выполнить команду update-ca-trust extract на всех остальных устройствах
+

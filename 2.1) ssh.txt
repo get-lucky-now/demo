@@ -1,0 +1,18 @@
+nano /etc/openssh/sshd_config
+
+    Port 2024
+    PermitRootLogin no
+    AllowUsers sshuser
+    MaxAuthTries 2
+    Banner /etc/openssh/banner
+
+nano /etc/openssh/banner
+
+    Authorized access only
+
+
+systemctl enable --now sshd
+systemctl restart sshd
+
+ssh [пользователь]@[ip-адрес]
+ssh -p порт [пользователь]@[ip-адрес]

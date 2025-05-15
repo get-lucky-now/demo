@@ -1,0 +1,38 @@
+НА СЕРВЕРЕ
+
+apt-get install rsyslog-classic
+
+=====================================================
+nano /etc/rsyslog.d/00_common.conf
+=====================================================
+
+module(load="imudp")
+input(type="imudp" port="514")
+
+module(load="imtcp")
+input(type="imtcp" port="514")
+
+$template RemoteLogs,"/var/log/rsyslog/%HOSTNAME%/%PROGRAMNAME%.log"
+*.* ?RemoteLogs
+& ~
+
+******************************************************
+
+systemctl enable --now rsyslog
+
+******************************************************
+
+НА КЛИЕНТЕ
+
+apt-get install rsyslog-classic
+
+echo "*.* @@192.168.200.1:514" > /etc/rsyslog.d/all_log.conf
+
+systemctl enable --now rsyslog
+
+ПРОВЕРКА: 
+logger -p 'Тестовое сообщение'
+cat /var/log/rsyslog/hq-rtr/root.log
+cat /var/log/rsyslog/br-rtr/root.log
+cat /var/log/rsyslog/br-srv/root.log
+
