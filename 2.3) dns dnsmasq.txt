@@ -1,3 +1,5 @@
+HQ-SRV
+
 ======================================================
 nano /etc/dnsmasq.conf
 ======================================================
@@ -7,7 +9,7 @@ nano /etc/dnsmasq.conf
 no-resolv
 domain=au-team.irpo
 server=8.8.8.8
-server=/au-team.irpo/192.168.3.10
+#server=/au-team.irpo/192.168.3.10
 interface=ens18
 
 address=/hq-rtr.au-team.irpo/192.168.1.1
