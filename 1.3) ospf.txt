@@ -44,3 +44,6 @@ do wr mem
 exit
 exit
 exit
+
+ospf neighbor
+show ip route ospf
