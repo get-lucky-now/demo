@@ -1,0 +1,49 @@
+br-rtr
+===================================
+frr version 9.0.2
+frr defaults traditional
+hostname br-rtr.au-team.irpo
+log file /var/log/frr/frr.log
+no ipub forwarding
+! 
+interface gre0
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 P@ssword
+exit
+! 
+interface iptunnel
+ no ip ospf passive
+exit
+! 
+router ospf
+ passive-interface default
+ network 10.0.0.0/28 area 0 
+ network 192.168.4.0/28 area
+exit
+! 
+===================================
+
+hq-rtr
+===================================
+frr version 9.0.2
+frr defaults traditional
+hostname hq-rtr.au-team.irpo
+log file /var/log/frr/frr.log
+no ipub forwarding
+! 
+interface gre0
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 P@ssword
+exit
+! 
+interface iptunnel
+ no ip ospf passive
+exit
+! 
+router ospf
+ passive-interface default
+ network 10.0.0.0/28 area 0
+ network 192.168.1.0/26 area
+ network 192.168.2.0/28 area
+ network 192.168.99.0/29 area
+exit
